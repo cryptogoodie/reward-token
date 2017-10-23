@@ -1,0 +1,9 @@
+zeppelin-solidity/*.swp
+zeppelin-solidity/*.swo
+zeppelin-solidity/node_modules/
+zeppelin-solidity/build/
+zeppelin-solidity/.DS_Store/
+zeppelin-solidity//coverage
+zeppelin-solidity/coverage.json
+zeppelin-solidity/allFiredEvents
+zeppelin-solidity/scTopics
