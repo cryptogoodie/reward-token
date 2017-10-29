@@ -34,7 +34,7 @@ contract('BaseRewardInteraction', function(accounts){
 	it('should not allow to call the init functions any more times', function(){
 		return expectThrow(basetoken.setRewardTokenOwner(sender, {from: owner}))
 		.then(function(){
-			return expectThrow(basetoken.setRewardStart(0, {from: owner}))
+			return expectThrow(basetoken.setRewardStart(123, {from: owner}))})
 		.then(function(){
 			return expectThrow(rewardtoken.setBaseTokenOwner(sender, {from: reward_owner}))
 		});

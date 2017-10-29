@@ -35,8 +35,8 @@ contract BaseToken is StandardToken, Ownable {
     address rewardTokenOwner;    // reward coin owner
     uint rewardStart;   // start of the rewarding peroid
 
-    uint constant ds = 3 * 30 * 24 * 60 * 60;    // period length in seconds (ca. 3 months in seconds)
-    uint[] rewardPerPeriod;
+    uint constant ds = 3 * 30 * 24 * 60 * 60;    // period length in seconds (ca. 3 months in seconds, every period has it's own reward rate set in the array below)
+    uint[] rewardPerPeriod; // contains the rewared for any given (ds long) period. Period 0 is starting from rewardStart
 
     function BaseToken() {
         name = "BaseCoin";
@@ -107,7 +107,7 @@ contract BaseToken is StandardToken, Ownable {
             rewValue[msg.sender] = rewValue[msg.sender].add(rewFrom);
             rewTimestamp[msg.sender] = now;
         }
-        if (rewTo > 0) {
+        if (rewTo > 0 && msg.sender != _to) {
             // increase unclaimed reward
             rewValue[_to] = rewValue[_to].add(rewTo);
             rewTimestamp[_to] = now;
@@ -149,21 +149,26 @@ contract BaseToken is StandardToken, Ownable {
      * - for the period between t1 and t2 */
     // TODO: visible only for testing, make it internal later
     function rewardFor(uint t1, uint t2) constant returns (uint reward) {
-        uint p1 = (t1 - rewardStart) / ds;
+        uint periodCnt = rewardPerPeriod.length;
+	if ( t2 <= t1 ) return 0;
+	if ( t2 <= rewardStart ) return 0;
+	if ( t1 >= rewardStart + periodCnt * ds ) return 0;
+        if ( t1 < rewardStart) t1 = rewardStart; // so the next won't overflow
+	uint p1 = (t1 - rewardStart) / ds;
+	if ( t2 > rewardStart + periodCnt * ds) t2 = rewardStart + periodCnt * ds;
         uint p2 = (t2 - rewardStart) / ds;
-        assert(p2 >= p1);
         if (p1 == p2) {
             // same period
-            return (t2 - t1) / ds * rewardPerPeriod[p1];
+	        return ((t2 - t1) * rewardPerPeriod[p1]) / ds;
         } else {
-            uint p1start = rewardStart + p1 * ds;
+            uint p1end = rewardStart + (p1 + 1) * ds;
             uint p2start = rewardStart + p2 * ds;
-            assert(p2start >= p1start);
-            reward = (t1 - p1start) / ds * rewardPerPeriod[p1];
-            for (uint p = p1; p < p2; p++) {
+            reward = ((p1end - t1) * rewardPerPeriod[p1]) / ds;
+            for (uint p = p1 + 1; p < p2; p++) {
                 reward += rewardPerPeriod[p];
             }
-            reward += (t2 - p2start) / ds * rewardPerPeriod[p2];
+            if (t2 == p2start) return reward;
+            reward += ((t2 - p2start) * rewardPerPeriod[p2]) / ds;
             return reward;
         }
     }
@@ -172,16 +177,16 @@ contract BaseToken is StandardToken, Ownable {
         if (rewardStart <= 0 || now < rewardStart) {
             return 0;
         }
+
         // max(previous reward update time, rewardStart)
         uint _from = rewTimestamp[_toAddr];
         if (_from == 0) {
             _from = rewardStart;
         }
+
         // min(now, end of reward period)
         uint _to = now;
-        if (now > rewardStart + 20 * ds) {
-            _to = rewardStart + 20 * ds;
-        }
+
         // divide by 10000, because of 4 decimals for base coin
         return balanceOf(_toAddr) * rewardFor(_from, _to) / 10000;
     }

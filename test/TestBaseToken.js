@@ -16,7 +16,7 @@ contract('BaseToken', function(accounts){
 		}).then(function(){
 			basetoken.setRewardTokenOwner(accounts[9]);
 		}).then(function(){
-			basetoken.setRewardStart(0);	
+			basetoken.setRewardStart(1);
 		});
 	});
 
