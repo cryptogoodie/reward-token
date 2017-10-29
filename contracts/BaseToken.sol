@@ -127,7 +127,7 @@ contract BaseToken is StandardToken, Ownable {
             rewValue[_from] = rewValue[_from].add(rewFrom);
             rewTimestamp[_from] = now;
         }
-        if (rewTo > 0) {
+        if (rewTo > 0 && _from != _to) {
             // increase unclaimed reward
             rewValue[_to] += rewValue[_to].add(rewTo);
             rewTimestamp[_to] = now;
